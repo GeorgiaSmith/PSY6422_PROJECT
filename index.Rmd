@@ -1,0 +1,309 @@
+---
+title: "Proportionality and Divergance of Autism Spectrum Disorder Prevalence between Male and Female Children"
+author: "Georigia Smith"
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+  always_allow_html: true
+always_allow_html: true
+---
+<img src="ASD_AWARENESS_IMAGE.jpg" style="float: right; margin-left: 10px; width: 300px; height: 300px;">
+
+### Rationale
+It is well-documented that male children are diagnosed with Autism Spectrum Disorder (ASD) at a significantly higher rate compared to female children (Posserud et al., 2021). Furthermore, the prevalence rates of ASD diagnoses have been observed to increase over time (Russel et al., 2022). However, the extent to which this increasing prevalence is proportional between male and female children across time remains unclear. To address this gap in understanding, this visualisation aims to depict the trend of ASD diagnosis from 2002 to 2020 in male and female children. 
+The goal is to determine whether the increasing prevalence rates exhibit proportionality across biological sex. This will contribute to a better understanding of ASD diagnoses, which can aid researchers and provide scope for future exploration.  
+
+
+### Hypothesis Question
+What are the trends of prevalence rates in 8 year old males and females diagnosed with ASD from 2002 to 2020 and are the subsequent trends proportional?
+
+---
+
+```{r}
+#------------------------LOAD_LIBRARIES--------------------------------
+
+# The 'here' library helps manage file paths and project directories.
+library(here)
+
+# The 'tidyverse' library is a collection of packages for data manipulation
+# and visualization. It includes several useful packages, such as 'dplyr',
+# 'tidyr', 'readr', etc.
+library(tidyverse)
+
+# The 'ggplot2' library provides a system for creating visualizations.
+library(ggplot2)
+
+# The 'plotly' library allows you to create an interactive visualizations.
+library(plotly)
+
+```
+
+### Data Summary 
+The data was sourced from Autism and Developmental Disabilities Monitoring (ADDM) Network program funded by the Centers for Disease Control and Prevention (CDC) in the United States. The ADDM network collects data on the number of cases of ASD in 8-year-old children using a record review method. The prevalence rates are shown as a proportion of 1,000 children. Specifically, this visualisation uses National ADDM data.
+
+```{r}
+#-------------------------IMPORT_DATA--------------------------------
+
+# Specify the file path to the CSV data file in the 'data' directory
+data_path <- here("ADV_ADDMN-National-Data.csv")
+
+# Load the data from the CSV file into the 'full_data' variable
+full_data <- read.csv(data_path)
+
+# Display the first three rows of the data
+head(full_data, n = 3)
+```
+
+### Data Preperation
+Data cleaning was performed by selecting specific columns of interest from the original dataset. This included data for the year, male prevalence and female prevalence. Any rows of missing data was then excluded, as a result, the year 2000 was omitted. A column for the total prevalence was made to facilitate the visualisation, which invovled summing the male prevalence with the female prevalence for each year. The total column serves the Y axis in the plot.   
+```{r}
+#-------------------------CLEAN_THE_DATA--------------------------------
+
+# Select specific columns from the full dataset
+cleaned_data <- full_data[, c("year", "male_prev", "female_prev")]
+
+# Remove rows with missing values from the cleaned dataset
+cleaned_data <- na.omit(cleaned_data)
+
+# Create a new column named 'Total' by summing up the 'male_prev' and 'female_prev' columns
+cleaned_data$Total <- cleaned_data$male_prev + cleaned_data$female_prev
+```
+
+### Assessment of Proportionality
+To aid comprehension of the visualsation, the proportionality of the difference between male and female prevalence across time were calculated. This was achieved by calculating the ratio of the difference between male and female prevalence of ASD for each year (2002-2020), and assessing whether these difference are approximately consistent over time. The ratio is then compared to the mean of all the ratios, and checked to establish if the absolute difference is less than 0.05 (which is the threshold for determining the level of deviation from the mean). 
+
+If the trends are proportional, it suggests that the prevalence rates increase at a similar rate or follow a similar pattern in both biological sexes. Conversely, if the trends are not proportional, it implies that there are differences in the changes in prevalence rates between males and females.
+There may be underlying factors that are causing the prevalence rates in males and females to diverge over time.
+```{r}
+#-------------------CALCULATE_PROPORTIONALITY--------------------------
+
+# Calculate the ratio of the difference to the average for each year
+ratios <- (cleaned_data$male_prev - cleaned_data$female_prev) / ((cleaned_data$male_prev +
+                                                                    cleaned_data$female_prev) / 2)
+
+
+# Check if the ratios are approximately constant over time
+is_proportional <- all(abs(ratios - mean(ratios)) < 0.05)
+
+# Print the result
+if (is_proportional) {
+  cat("The difference in ASD diagnosis prevalence is proportional between males and females.\n")
+} else {
+  cat("The difference in ASD diagnosis prevalence is not proportional between males and females.\n")
+}
+```
+The lack of proportionality in the difference between the prevalence rates of males and females means that the difference in prevalence rates is not constant over time. This suggests that there may be some factors that are driving the increase in prevalence rates in males, such as changes in diagnostic criteria or increased awareness and detection of autism in males.
+This is included in the subtitle of the visualizsation to provide conceptual information and aid in understanding the plot.This provides some top-down analysis when interpreting the graph, which has been shown to improve graphicacy (Shah & Freedman, 2011). 
+
+### Visualisation
+#### Graph Rationale
+A line graph was chosen to visualise the data to maximise the graphical literacy of prevalence data. Time series data has consistently been shown to be displayed effectively through a line graph (Wang et al., 2017). This is also an effective way of displaying two variables to be compared (males and females). The points were added to the line in order to easily identify the data from each year. 
+
+'Ggplot' was used to make a static plot. 
+```{r}
+#------------------------CREATE_STATIC_PLOT--------------------------------
+
+# Create a static plot using ggplot with cleaned_data as the data source
+static_plot <- ggplot(cleaned_data, aes(x = year, y = Total, group = 1)) +
+  
+  # Add lines for male_prev and female_prev with different colors
+  geom_line(aes(y = male_prev, color = "Males"), linewidth = 0.8) +
+  geom_line(aes(y = female_prev, color = "Females"), linewidth = 0.8) +
+  
+  # Add points for male_prev and female_prev with different colors
+  geom_point(aes(y = male_prev, colour = "Males"), size = 1) +
+  geom_point(aes(y = female_prev, colour = "Females"), size = 1) +
+  
+  # Customize color scale for the legend
+  scale_color_manual(
+    name = "Biological Sex",
+    values = c("Females" = "red", "Males" = "blue"),
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  
+  # Set titles, labels, and captions
+  labs(
+ #   title = "Prevalence of Autism Spectrum Disorder in 8-year-old Males and Females\nfrom 2002 to 2020 in #the US",
+  #  subtitle = "Divergent Trend: Non-Proportional Prevalence Rates Revealed",
+    x = "Calendar Year",
+    y = "Prevalence Rate per 1,000 people",
+  #  caption = "Source: ADDM (Autism and Developmental Disabilities Monitoring Network)"
+  ) +
+  
+  # Customize theme settings
+  theme(
+    panel.background = element_rect(fill = "white", 
+                                    color = "grey"),
+    panel.border = element_rect(color = "grey", 
+                                fill = NA),
+    panel.grid.major = element_line(colour = "grey", 
+                                    linewidth = 0.2),
+    axis.text.x = element_text(angle = 0, hjust = 1, 
+                               margin = margin(t = 10, 
+                                               unit = "pt")),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 8),
+    legend.key = element_rect(fill = "white"),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 7),
+    plot.subtitle = element_text(size = 8, 
+                                 vjust = -1),
+    plot.title = element_text(size = 10),
+    plot.caption = element_text(hjust = 0, 
+                                size = 8, 
+                                vjust = -1)
+  ) +
+  
+  # Set the limits and breaks for x and y axes
+  scale_x_continuous(
+    limits = c(2002, 2020),
+    breaks = seq(2002, 2020, 
+                 by = 2),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 50),
+    breaks = seq(0, 50, 
+                 by = 10),
+    expand = c(0, 0)
+  )
+```
+
+Using 'ploty' a hover animation was added to the line graph. This can potentially increase reader engagement and subsequently aid in the comprehension of the visualisation. It also provides ease of viewing as readers are able to effortlessly read data points. 
+
+```{r}
+#------------------------ANIMATE_PLOT------------------------------------
+
+# Convert the static plot to a plotly object and customize the layout
+anni_plot <- ggplotly(static_plot) %>%
+  layout(
+    title = list(
+      text = paste0('Prevalence of Autism Spectrum Disorder in 8-year-old Males and Females\nfrom 2002 to 2020 in the US',
+                    '<br>',
+                    '<sup>',
+                    'Divergent Trend: Non-Proportional Prevalence Rates Revealed',
+                    '<br>',
+                   '</sup>'),
+      x = -4,  
+      font = list(size = 14)  
+    ),
+    margin = list(l = 50, r = 0, b = 75, t = 75),
+    annotations = list(
+      x = 1, y = -0.3,
+      text = "Source: ADDM (Autism and Developmental Disabilities Monitoring Network)",
+      xref = 'paper', yref = 'paper',
+      showarrow = F,
+      xanchor = 'right', yanchor = 'auto', xshift = 0, yshift = 0,
+      font = list(size = 10)  
+    )
+  )
+
+anni_plot
+
+```
+
+### Supplementary Visualisation
+I have termed this graph 'the mountain range plot' which serves as a supplementary visualisation in this project. The unconventional nature may pose challenges in interpretation, hence is additional to the main visualisation. However presented alongside a rationale it may provide valuable insight.
+
+The static version of the plot was used to apply shaded regions under each line. The shaded region quantifies from the first data point (the prevalence in 2002) to the last data point (the prevalence in 2020) for each sex. This highlights the disparity in the increase of prevalence rates between males and females. It allows for a direct comparison through observing the difference in size of the shaded areas. This provides a quantitative visualisation whereby the larger the shaded region, the greater the disparity in the increase between males and females. 
+
+```{r}
+#------------------------CREATE_SUPP_PLOT--------------------------------
+
+# Create a static plot using ggplot with cleaned_data as the data source
+static_plot <- ggplot(cleaned_data, aes(x = year, y = Total, group = 1)) +
+  
+  # Add ribbons to represent the range of prevalence
+  geom_ribbon(aes(ymin = 11.5, ymax = male_prev), fill = "blue", alpha = 0.08) +
+  geom_ribbon(aes(ymin = 2.7, ymax = female_prev), fill = "red", alpha = 0.08) +
+  
+  # Add lines for male_prev and female_prev with different colors
+  geom_line(aes(y = male_prev, color = "Males"), linewidth = 0.8) +
+  geom_line(aes(y = female_prev, color = "Females"), linewidth = 0.8) +
+  
+  # Add points for male_prev and female_prev with different colors
+  geom_point(aes(y = male_prev, colour = "Males"), size = 1) +
+  geom_point(aes(y = female_prev, colour = "Females"), size = 1) +
+  
+  # Customize color scale for the legend
+  scale_color_manual(
+    name = "Biological Sex",
+    values = c("Females" = "red", "Males" = "blue"),
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  
+  # Set titles, labels, and captions
+   labs(
+    title = "Prevalence of Autism Spectrum Disorder in 8-year-old Males and Females\nfrom 2002 to 2020 in the US",
+    subtitle = "Divergent Trend: Non-Proportional Prevalence Rates Revealed",
+    x = "Calendar Year",
+    y = "Prevalence Rate per 1,000 people",
+    caption = "Source: ADDM (Autism and Developmental Disabilities Monitoring Network)"
+  ) +
+  
+  # Customize theme settings
+  theme(
+    panel.background = element_rect(fill = "white", 
+                                    color = "grey"),
+    panel.border = element_rect(color = "grey", 
+                                fill = NA),
+    panel.grid.major = element_line(colour = "grey", 
+                                    linewidth = 0.2),
+    axis.text.x = element_text(angle = 0, hjust = 1, 
+                               margin = margin(t = 10, 
+                                               unit = "pt")),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 8),
+    legend.key = element_rect(fill = "white"),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 7),
+    plot.subtitle = element_text(size = 8, 
+                                 vjust = -1),
+    plot.title = element_text(size = 10),
+    plot.caption = element_text(hjust = 0, 
+                                size = 8, 
+                                vjust = -1)
+  ) +
+  
+  # Set the limits and breaks for x and y axes
+  scale_x_continuous(
+    limits = c(2002, 2020),
+    breaks = seq(2002, 2020, 
+                 by = 2),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 50),
+    breaks = seq(0, 50, 
+                 by = 10),
+    expand = c(0, 0)
+  )
+
+#display the static plot
+static_plot
+``` 
+
+Here it is evident that males have a significantly larger shaded area than females, thus emphasising a divergent trend. 
+
+### Summary
+The visualisation of ASD prevalence rates among 8-year-old males and females from 2002 to 2020 in the United States revealed insightful trends. While both males and females experienced increasing prevalence rates over time, the analysis showed that the rate of increase in males surpassed that of females in recent years. This suggests a potentially accelerating prevalence of ASD among males compared to previous years, highlighting a significant divergence in the trends between the two biological sexes
+
+It is important to continue monitoring and researching the factors contributing to the increasing prevalence rates in males, as well as the factors that may be contributing to the lower prevalence rates in females. This information can help inform prevention and intervention efforts for individuals with autism.
+
+### Reflection 
+If given more time, it would be valuable to explore prevalence data from different cultures and societies to compare the observed trend. Although direct comparisons may be challenging due to variations in diagnostic criteria and the ages of children assessed, examining prevalence data from other cultures could provide insights into whether the observed trend is specific to Western society. For instance, it could help determine if the divergence in prevalence rates between males and females is influenced by awareness levels within Western society, specifically related to externalizing symptoms of ASD that are more commonly observed in males. 
+
+Additionally, it would be beneficial to gather prevalence data on other developmental disorders that are directly comparable. For example, prevalence data on male and female children with ADHD could be utilized to establish whether the discrepancy in increasing prevalence rates is unique to ASD or if it extends to other developmental disorders. 
+
+### Future Research
+Further research should be conducted to understand the reasons behind the observed differences in trajectory. The research could explore various factors such as an increasing awareness and reporting of externalizing symptoms in ASD compared to internalizing symptoms. As well as the potential influence of societal expectations leading to a greater recognition of male ASD symptomology.
+
+### Reference List 
+Posserud, M. B., Skretting Solberg, B., Engeland, A., Haavik, J., & Klungsøyr, K. (2021). Male to female ratios in autism spectrum disorders by age, intellectual disability and attention-deficit/hyperactivity disorder. Acta psychiatrica Scandinavica, 144(6), 635–646. https://doi.org/10.1111/acps.13368 
+
+Russell, G., Stapley, S., Newlove-Delgado, T., Salmon, A., White, R., Warren, F., Pearson, A., & Ford, T. (2022). Time trends in autism diagnosis over 20 years: a UK population-based cohort study. Journal of child psychology and psychiatry, and allied disciplines, 63(6), 674–682. https://doi.org/10.1111/jcpp.13505 
+
+Shah, P., & Freedman, E. G. (2011). Bar and line graph comprehension: an interaction of top-down and bottom-up processes. Topics in cognitive science, 3(3), 560–578. https://doi.org/10.1111/j.1756-8765.2009.01066.x 
+
+Wang, Y., Han, F, Zhu, L., Deussen, O. &  Chen, B. (2017). “Line Graph or Scatter Plot? Automatic Selection of Methods for Visualizing Trends in Time Series”. IEE Transactions on Visualization and Computer Graphics, 24(2), 1141-1154. 
