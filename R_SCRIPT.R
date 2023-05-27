@@ -4,14 +4,14 @@
 library(here)
 
 # The 'tidyverse' library is a collection of packages for data manipulation
-# and visualization. It includes several useful packages, such as 'dplyr',
+# and visualisation. It includes several useful packages, such as 'dplyr',
 # 'tidyr', 'readr', etc.
 library(tidyverse)
 
-# The 'ggplot2' library provides a system for creating visualizations.
+# The 'ggplot2' library provides a system for creating visualisations.
 library(ggplot2)
 
-# The 'plotly' library allows you to create an interactive visualizations.
+# The 'plotly' library allows you to create an interactive visualisations.
 library(plotly)
 
 # The 'htmlwidgets' library enables the plot to be saved as a html widget 
@@ -21,7 +21,7 @@ library(htmlwidgets)
 #-------------------------IMPORT_DATA--------------------------------
 
 # Specify the file path to the CSV data file in the 'data' directory
-data_path <- here("data", "ADV_ADDMN-National-Data.csv")
+data_path <- here("ADV_ADDMN-National-Data.csv")
 
 # Load the data from the CSV file into the 'full_data' variable
 full_data <- read.csv(data_path)
@@ -90,7 +90,7 @@ static_plot <- ggplot(cleaned_data, aes(x = year, y = Total, group = 1)) +
       caption = "Source: ADDM (Autism and Developmental Disabilities Monitoring Network)"
   ) +
   
-  # Customize theme settings
+  # Customise theme settings
   theme(
     panel.background = element_rect(fill = "white", 
                                     color = "grey"),
@@ -131,9 +131,13 @@ static_plot <- ggplot(cleaned_data, aes(x = year, y = Total, group = 1)) +
 
 #------------------------ANIMATE_PLOT------------------------------------
 
-# Convert the static plot to a plotly object and customize the layout
+# Convert the static plot to a plotly object
 anni_plot <- ggplotly(static_plot) %>%
+  
+  # Add customisation to the plot
   layout(
+    
+    # Set the title of the plot
     title = list(
       text = paste0('Prevalence of Autism Spectrum Disorder in 8-year-old Males and Females\nfrom 2002 to 2020 in the US',
                     '<br>',
@@ -141,10 +145,18 @@ anni_plot <- ggplotly(static_plot) %>%
                     'Divergent Trend: Non-Proportional Prevalence Rates Revealed',
                     '<br>',
                     '</sup>'),
+      
+      # The x parameter is used to adjust the horizontal position of the title to the left
       x = -4,  
+      
+      # Set the appropriate font size
       font = list(size = 14)  
     ),
+    
+    # Set the margins around the plot
     margin = list(l = 50, r = 0, b = 75, t = 75),
+    
+    # Add a text annotation to cite the data source and adjust accordingly
     annotations = list(
       x = 1, y = -0.3,
       text = "Source: ADDM (Autism and Developmental Disabilities Monitoring Network)",
@@ -155,16 +167,16 @@ anni_plot <- ggplotly(static_plot) %>%
     )
   )
 
-#display the animated plot
+# The final ploty object is stored in the variable 'anni_plot' 
 anni_plot
 
 #------------------------SAVE_PLOT------------------------------------
 
-# Save the annimated graph as an HTML file which enables interaction with hover 
+# Save the animated graph as an HTML file which enables interaction with hover 
 saveWidget(anni_plot, file = "plotly_graph.html")
 
 # Save the static graph as a JPEG file
-ggsave("ASD_STATIC.jpg", plot = static_plot, device = "jpeg", width = 10, height = 8, units = "in")
+ggsave("VIS_STATIC_220243551.jpg", plot = static_plot, device = "jpeg", width = 10, height = 8, units = "in")
 
 
 
